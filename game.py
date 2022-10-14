@@ -9,6 +9,7 @@ FPS = 60
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 PLAYER_SPEED = 7
 BOMB_SPEED = 3
+BULLET_SPEED = 7
 CITY_HIT = pygame.USEREVENT +1
 bomb_dmg = 5
 B_SIZE = (20, 15)
@@ -38,6 +39,31 @@ def handleBombs(bombs, explo, city):
             bombs.remove(bomb)
         elif bomb.y > HEIGHT:
             bombs.remove(bomb)
+
+def shoot_aad(city, player):
+    bullets = []
+    for i in range(5):
+        x_offset = random.randint(-30,30)
+        bullets.append([city.x + C_SIZE[0] /2 + x_offset, city.y])
+
+    x = 0
+    if city.x + C_SIZE[0] / 2 > player.x:  # po lewej
+        x = (city.x + C_SIZE[0] / 2) - (player.x + P_SIZE[0] /2)
+        x -= x *2
+    else:  # po prawej
+        x = (player.x + P_SIZE[0] /2) - (city.x + C_SIZE[0] // 2)
+    y = city.y - player.y
+    dist = (x ** 2 + y ** 2) ** 0.5
+    moves = dist / BULLET_SPEED
+
+    return [bullets, (x/moves, y/moves)] #0 = x i y pocisku, 1 = ile ma się ruszyć
+
+def handle_aad(player, bullets):
+    for salve in bullets:
+        for bullet in salve[0]:
+            move = salve[1]
+            bullet[0] += move[0]
+            bullet[1] -= move[1]
 
 def playerMovment(keys, player, last):
     tmp = ""
@@ -81,16 +107,18 @@ def draw_bar(cur,maX, cur_color, max_color, x,y, reverse = False):
 
         pygame.draw.rect(WIN, color,bar)
 
-def draw(bombs, player,city, last,explo, city_hp,player_hp):
+def draw(bombs, player,city, last,explo, city_hp,player_hp, bullets):
     WIN.fill((87,140,209))
     #player
     if last == "l":
         WIN.blit(PLANE2, (player.x, player.y))
     elif last == "r":
         WIN.blit(PLANE, (player.x, player.y))
+    pygame.draw.rect(WIN, (255, 0, 0), pygame.Rect(player.x, player.y, 5, 5))
 
     #city
-    WIN.blit(CITY, (city.x, city.y))
+    WIN.blit(CITY, (city.x , city.y))
+    pygame.draw.rect(WIN, (255, 0, 0), pygame.Rect(city.x + C_SIZE[0] /2, city.y, 5, 5))
 
     #bombz and explożyns
     for bomb in bombs:
@@ -101,6 +129,10 @@ def draw(bombs, player,city, last,explo, city_hp,player_hp):
         else:
             WIN.blit(BOMB2, (exp[0].x, exp[0].y))
             exp[1] -= 1
+    #aad bullets
+    for salve in bullets:
+        for bullet in salve[0]:
+            pygame.draw.circle(WIN, (150, 150, 150), (bullet[0], bullet[1]),5)
 
     #score
     draw_text(city_hp, (255,0,100), 40, WIDTH //2, 10, centered= True)
@@ -118,6 +150,7 @@ def main():
     city = pygame.Rect(WIDTH // 2 - (C_SIZE[0] // 2), HEIGHT - 100, C_SIZE[0], C_SIZE[1])
     explo = []
     bombs = []
+    bullets = []
     run = True
     clock = pygame.time.Clock()
     last = "r"
@@ -134,10 +167,13 @@ def main():
                 city_hp -= 5
         keys = pygame.key.get_pressed()
         tmp = playerMovment(keys, player, last)
+        rnd = random.randint(0,100 )
+        if rnd == 13: bullets.append(shoot_aad(city,player))
         if tmp != "":
             last=tmp
         handleBombs(bombs, explo, city)
-        draw(bombs, player, city, last, explo,city_hp, player_hp)
+        handle_aad(city,bullets)
+        draw(bombs, player, city, last, explo,city_hp, player_hp, bullets)
 
 
 
