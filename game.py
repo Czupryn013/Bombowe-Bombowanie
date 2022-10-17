@@ -1,5 +1,6 @@
 import pygame
 import random
+import menu
 
 pygame.init()
 
@@ -75,7 +76,6 @@ def handle_aad(player, bullets):
             #checking for hit
             hitbox = pygame.Rect(bullet[0], bullet[1], 4,4)
             if player.colliderect(hitbox):
-                print("tak")
                 pygame.event.post(pygame.event.Event(PlAYER_HIT))
                 salve[0].remove(bullet)
             elif bullet[1] < 0 or bullet[0] < 0 or bullet[0] > WIDTH:
@@ -161,22 +161,23 @@ def draw(bombs, player,city, last,explo, score,player_hp, bullets):
 
     pygame.display.update()
 
-def main():
+def main(score):
     player_hp = [5,5] #0 = current hp, 1 = max hp
-    score = 0
     player = pygame.Rect(WIDTH // 2, 100, P_SIZE[0], P_SIZE[1])
     city = pygame.Rect(WIDTH // 2 - (C_SIZE[0] // 2), HEIGHT - 100, C_SIZE[0], C_SIZE[1])
     explo = []
     bombs = []
     bullets = []
-    run = True
+    alive = True
     clock = pygame.time.Clock()
+    menu_ = menu.Menu(WIDTH, HEIGHT, FPS)
     last = "r"
-    while run:
+    while alive:
+        print(WIN)
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                pygame.quit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and len(bombs) < BOMBS:
                     bomb = pygame.Rect(player.x + (P_SIZE[1] // 2), player.y + 15, B_SIZE[0], B_SIZE[1])
@@ -193,6 +194,11 @@ def main():
         handleBombs(bombs, explo, city)
         handle_aad(player,bullets)
         draw(bombs, player, city, last, explo,score, player_hp, bullets)
+
+        if player_hp[0] == 0:
+            alive = False
+
+    return score
 
 
 
