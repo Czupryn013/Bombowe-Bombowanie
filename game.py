@@ -1,3 +1,5 @@
+import sys
+
 import pygame
 import random
 import menu
@@ -186,6 +188,7 @@ def main(score):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and len(bombs) < BOMBS:
                     bomb = pygame.Rect(player.x + (P_SIZE[1] // 2), player.y + 15, B_SIZE[0], B_SIZE[1])
