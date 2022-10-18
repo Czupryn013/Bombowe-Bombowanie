@@ -8,12 +8,16 @@ WIDTH = 900
 HEIGHT = 700
 FPS = 60
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+menu_ = menu.Menu(WIDTH, HEIGHT, FPS)
+BONUS = 1 #multipier bonus
 PLAYER_SPEED = 7
 BOMB_SPEED = 3
 BULLET_SPEED = 7
+BULLET_RNG = 100
+ON_DEATH = 25
 CITY_HIT = pygame.USEREVENT +1
 PlAYER_HIT = pygame.USEREVENT +2
-bomb_dmg = 5
+BOMB_DMG = 5
 B_SIZE = (20, 15)
 P_SIZE = (100, 40)
 C_SIZE = (WIDTH // 3, 100)
@@ -29,6 +33,7 @@ BOMB2 = pygame.transform.rotate(BOMB2, 50)
 CITY = pygame.transform.scale(pygame.image.load("assets/berlin_city.png"), C_SIZE)
 
 pygame.display.set_caption("Bombowe Bombowanie")
+
 
 def handleBombs(bombs, explo, city):
     for bomb in bombs:
@@ -126,7 +131,7 @@ def draw_bar(cur,maX, cur_color, max_color, x,y, reverse = False):
 
         pygame.draw.rect(WIN, color,bar)
 
-def draw(bombs, player,city, last,explo, score,player_hp, bullets):
+def draw(bombs, player,city, last,explo, score,player_hp, bullets, dmg_text):
     WIN.fill((87,140,209))
     #player
     if last == "l":
@@ -158,6 +163,10 @@ def draw(bombs, player,city, last,explo, score,player_hp, bullets):
     draw_bar(len(bombs), BOMBS, (100,100,100), (170,170,170), 10, 5, reverse=True)
     #hp
     draw_bar(player_hp[0], player_hp[1], (0,255,0), (150,150,150), 10, 30)
+    #dmg pop up
+    if dmg_text and dmg_text[1] != 0:
+        dmg_text[1] -= 1
+        draw_text(dmg_text[0], (100, 100, 100), 20, WIDTH - 170, 10, centered=True)
 
     pygame.display.update()
 
@@ -170,10 +179,9 @@ def main(score):
     bullets = []
     alive = True
     clock = pygame.time.Clock()
-    menu_ = menu.Menu(WIDTH, HEIGHT, FPS)
     last = "r"
+    dmg_text = None
     while alive:
-        print(WIN)
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -182,20 +190,25 @@ def main(score):
                 if event.key == pygame.K_SPACE and len(bombs) < BOMBS:
                     bomb = pygame.Rect(player.x + (P_SIZE[1] // 2), player.y + 15, B_SIZE[0], B_SIZE[1])
                     bombs.append(bomb)
+                if event.key == pygame.K_ESCAPE:
+                    menu_.main_menu()
             if event.type == CITY_HIT:
-                score += 5
+                score += BOMB_DMG * BONUS
+                dmg_text = [f"Player delt: {5 * BONUS} dmg to the city!" , 100]
+                print(f"Player delt: {5 * BONUS} dmg to the city!")
                 if random.randint(0, 10) == 1: bullets.append(shoot_aad(city, player))
             if event.type == PlAYER_HIT:
                 player_hp[0] -= 1
         keys = pygame.key.get_pressed()
         tmp = playerMovment(keys, player, last)
-        if random.randint(0,100 ) == 13: bullets.append(shoot_aad(city,player))
+        if random.randint(0,BULLET_RNG) == 13: bullets.append(shoot_aad(city,player))
         if tmp != "": last=tmp
         handleBombs(bombs, explo, city)
         handle_aad(player,bullets)
-        draw(bombs, player, city, last, explo,score, player_hp, bullets)
+        draw(bombs, player, city, last, explo,score, player_hp, bullets, dmg_text)
 
-        if player_hp[0] == 0:
+        if player_hp[0] <= 0:
+            score -= ON_DEATH
             alive = False
 
     return score
