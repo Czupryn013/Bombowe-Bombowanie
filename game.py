@@ -12,6 +12,7 @@ FPS = 60
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 menu_ = menu.Menu(WIDTH, HEIGHT, FPS)
 BONUS = 1 #multipier bonus
+max_hp =5
 PLAYER_SPEED = 7
 BOMB_SPEED = 3
 BULLET_SPEED = 7
@@ -23,7 +24,7 @@ BOMB_DMG = 5
 B_SIZE = (20, 15)
 P_SIZE = (100, 40)
 C_SIZE = (WIDTH // 3, 100)
-BOMBS = 5
+max_bombs = 5
 PLANE = pygame.transform.scale(pygame.image.load("assets/bombowiec.png"), P_SIZE)
 PLANE2 = pygame.transform.scale(pygame.image.load("assets/bombowiec2.png"), P_SIZE)
 BOMB = pygame.transform.scale(pygame.image.load("assets/bomba.png"), B_SIZE)
@@ -39,14 +40,19 @@ pygame.display.set_caption("Bombowe Bombowanie")
 
 def handleBombs(bombs, explo, city):
     for bomb in bombs:
-        bomb.y += BOMB_SPEED
-        if city.colliderect(bomb):
+        bomb[0].y += BOMB_SPEED #opadanie w dół
+        if bomb[1] == "l":
+            bomb[0].x -= 0.5
+        if bomb[1] == "r": #siła w bok, nwm czemu wartości są rożne, jak jest 0.5 przy r to nie dziala
+            bomb[0].x += 1
+
+        if city.colliderect(bomb[0]): #sprawdzanie czy bomba trafiła w miasto
             pygame.event.post(pygame.event.Event(CITY_HIT))
-            explosion = bomb
+            explosion = bomb[0]
             explosion.y += random.randint(0,40)
             explo.append([explosion, 30])
             bombs.remove(bomb)
-        elif bomb.y > HEIGHT:
+        elif bomb[0].y > HEIGHT or bomb[0].x > WIDTH or bomb[0].x < -1: #sprawdzanie jest poza ekranem
             bombs.remove(bomb)
 
 def shoot_aad(city, player):
@@ -147,7 +153,7 @@ def draw(bombs, player,city, last,explo, score,player_hp, bullets, dmg_text):
 
     #bombz and explożyns
     for bomb in bombs:
-        WIN.blit(BOMB, (bomb.x, bomb.y))
+        WIN.blit(BOMB, (bomb[0].x, bomb[0].y))
     for exp in explo:
         if exp[1] == 0:
             explo.remove(exp)
@@ -162,7 +168,7 @@ def draw(bombs, player,city, last,explo, score,player_hp, bullets, dmg_text):
     #score
     draw_text(score, (255,0,100), 40, WIDTH //2, 10, centered= True)
     #ammo/bombs
-    draw_bar(len(bombs), BOMBS, (100,100,100), (170,170,170), 10, 5, reverse=True)
+    draw_bar(len(bombs), max_bombs, (100, 100, 100), (170, 170, 170), 10, 5, reverse=True)
     #hp
     draw_bar(player_hp[0], player_hp[1], (0,255,0), (150,150,150), 10, 30)
     #dmg pop up
@@ -173,7 +179,7 @@ def draw(bombs, player,city, last,explo, score,player_hp, bullets, dmg_text):
     pygame.display.update()
 
 def main(score):
-    player_hp = [5,5] #0 = current hp, 1 = max hp
+    player_hp = [max_hp, max_hp] #0 = current hp, 1 = max hp
     player = pygame.Rect(WIDTH // 2, 100, P_SIZE[0], P_SIZE[1])
     city = pygame.Rect(WIDTH // 2 - (C_SIZE[0] // 2), HEIGHT - 100, C_SIZE[0], C_SIZE[1])
     explo = []
@@ -185,16 +191,17 @@ def main(score):
     dmg_text = None
     while alive:
         clock.tick(FPS)
+        player_hp[1] = max_hp
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and len(bombs) < BOMBS:
+                if event.key == pygame.K_SPACE and len(bombs) < max_bombs:
                     bomb = pygame.Rect(player.x + (P_SIZE[1] // 2), player.y + 15, B_SIZE[0], B_SIZE[1])
-                    bombs.append(bomb)
+                    bombs.append((bomb, last)) #0 bomb rect, "l" or "r"
                 if event.key == pygame.K_ESCAPE:
-                    menu_.main_menu()
+                    score = menu_.main_menu(score)
             if event.type == CITY_HIT:
                 score += BOMB_DMG * BONUS
                 dmg_text = [f"Player delt: {5 * BONUS} dmg to the city!" , 100]

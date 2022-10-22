@@ -2,13 +2,15 @@ import sys
 import pygame
 import game
 
+
 class Menu:
     def __init__(self,width, height, FPS):
         self.width =width
         self.height =height
         self.FPS = FPS
         self.diciculty = "Easy"
-        print("init")
+        self.BG_COLOR = (255, 255, 0)
+        self.score = 0
 
     def draw_text(self,content, color, size, x, y, x_center=False, y_center = False):
         font = pygame.font.SysFont("arialblack", size)
@@ -44,10 +46,41 @@ class Menu:
             game.BONUS = 3
 
     def shop(self):
-        pass
+        show_shop = True
+        clock = pygame.time.Clock()
+        while show_shop:
+            clock.tick(self.FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        show_shop = False
+                    if event.key == pygame.K_1 and self.score >= 20:
+                        game.max_bombs +=1
+                        self.score -= 20
+                    if event.key == pygame.K_2 and self.score >= 10:
+                        game.max_hp +=1
+                        self.score -=10
+                    if event.key == pygame.K_3:
+                        game.max_hp +=1
+            self.set_dificulty(self.diciculty)
+
+            game.WIN.fill(self.BG_COLOR)
+            
+            #stats
+            self.draw_text(f"Bombs - {game.max_bombs}", (255, 0, 0), 20, self.width - 100, self.height // 5 - 100, x_center=True, y_center=True)
+            self.draw_text(f"Max hp - {game.max_hp}", (255, 0, 0), 20, self.width - 100, self.height // 5 - 50, x_center=True, y_center=True)
+            self.draw_text(f"Repair Kit - {1}", (255, 0, 0), 20, self.width - 100, self.height // 5 , x_center=True, y_center=True)
+
+            self.draw_text("1 - +1 Max Bombs", (255,0,0), 30, self.width // 2, self.height // 2 - 50,x_center=True, y_center=True)
+            self.draw_text("2 - +1 Max Health", (255,0,0), 30, self.width // 2, self.height // 2,x_center=True, y_center=True)
+            self.draw_text("3 - +1 Repait Kit", (255,0,0), 30, self.width // 2, self.height // 2 + 50,x_center=True, y_center=True)
+
+            pygame.display.update()
 
     def options(self):
-        game.WIN.fill((255, 255, 0))
         show_opt = True
         clock = pygame.time.Clock()
         while show_opt:
@@ -67,6 +100,7 @@ class Menu:
                         show_opt = False
                     if event.key == pygame.K_ESCAPE:
                         show_opt = False
+            game.WIN.fill(self.BG_COLOR)
 
             if self.diciculty == "Easy":
                 self.draw_text("1 - Easy", (255, 0, 255), 40, self.width // 2, self.height // 2 - 50, x_center=True,
@@ -91,12 +125,12 @@ class Menu:
                                y_center=True)
             pygame.display.update()
 
-    def main_menu(self):
+    def main_menu(self,score):
+        self.score = score
         show_menu = True
         clock = pygame.time.Clock()
         while show_menu:
             clock.tick(self.FPS)
-            # print(f"{self.diciculty}" + "1")
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -112,12 +146,13 @@ class Menu:
                         pygame.quit()
             self.set_dificulty(self.diciculty)
 
-            game.WIN.fill((255, 255, 0))
+            game.WIN.fill(self.BG_COLOR)
             self.draw_text("1 - Play", (255, 0, 0), 40, self.width // 2, self.height // 2 -100, x_center=True, y_center=True)
             self.draw_text("2 - Shop", (255, 0, 0), 40, self.width // 2, self.height // 2 -50, x_center=True, y_center=True)
             self.draw_text("3 - Options", (255, 0, 0), 40, self.width // 2, self.height // 2 , x_center=True, y_center=True)
             self.draw_text("4 - Quit", (255, 0, 0), 40, self.width // 2, self.height // 2 + 50, x_center=True, y_center=True)
             pygame.display.update()
+        return self.score
 
     def game_over(self):
         show_game_over = True
